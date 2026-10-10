@@ -1,0 +1,443 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123c2f">
+<title>VendaFácil AI</title>
+<style>
+:root {
+  --verde: #123c2f;
+  --fundo: #f3f7f4;
+  --borda: #dce5df;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--fundo);
+  color: #17231c;
+}
+header {
+  background: var(--verde);
+  color: white;
+  padding: 22px 16px;
+}
+header h1 { margin: 0; }
+header p { margin-bottom: 0; }
+main {
+  max-width: 700px;
+  margin: auto;
+  padding: 14px;
+  padding-bottom: 85px;
+}
+.card {
+  background: white;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 13px;
+}
+h2 { font-size: 18px; margin-top: 0; }
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 10px 0 5px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #cbd8d0;
+  border-radius: 9px;
+  font-size: 16px;
+  background: white;
+}
+textarea { min-height: 100px; }
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.principal { background: var(--verde); color: white; }
+.secundario { background: #d9f5e7; color: var(--verde); }
+.perigo { background: #ffeded; color: #9b2222; }
+.acoes { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+.acoes button { flex: 1; }
+.grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.numero { font-size: 23px; font-weight: bold; }
+.rotulo { color: #66736c; font-size: 12px; }
+.contato {
+  padding: 12px 0;
+  border-top: 1px solid var(--borda);
+}
+.contato h3 { margin: 0 0 5px; font-size: 16px; }
+.contato p { margin: 4px 0; font-size: 13px; }
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: white;
+  border-top: 1px solid var(--borda);
+  padding: 7px;
+  gap: 5px;
+}
+nav button {
+  flex: 1;
+  background: white;
+  color: var(--verde);
+  padding: 9px 3px;
+}
+.pagina { display: none; }
+.pagina.ativa { display: block; }
+.pequeno { font-size: 12px; color: #66736c; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>VendaFácil AI</h1>
+  <p>Organize contatos. Prepare mensagens. Venda mais.</p>
+</header>
+
+<main>
+  <section id="inicio" class="pagina ativa">
+    <div class="card">
+      <h2>Painel de vendas</h2>
+      <div class="grade">
+        <div><div class="rotulo">Contatos</div><div class="numero" id="total">0</div></div>
+        <div><div class="rotulo">Negociações</div><div class="numero" id="negociacoes">0</div></div>
+        <div><div class="rotulo">Clientes</div><div class="numero" id="clientes">0</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Encontrar empresas</h2>
+      <label>Segmento e cidade</label>
+      <input id="pesquisa" placeholder="Ex.: restaurantes em Recife">
+      <div class="acoes">
+        <button class="principal" onclick="buscar('maps')">Google Maps</button>
+        <button class="secundario" onclick="buscar('google')">Google</button>
+      </div>
+      <p class="pequeno">A pesquisa abre um site externo. Confira os resultados e cadastre os contatos adequados manualmente.</p>
+    </div>
+    <div class="card">
+      <h2>Próximos acompanhamentos</h2>
+      <div id="retornos">Nenhum retorno agendado.</div>
+    </div>
+  </section>
+
+  <section id="cadastro" class="pagina">
+    <div class="card">
+      <h2>Cadastrar contato</h2>
+      <input type="hidden" id="id">
+      <label>Nome da empresa ou pessoa</label>
+      <input id="nome" placeholder="Nome do cliente">
+      <label>Telefone com DDD</label>
+      <input id="telefone" type="tel" placeholder="Ex.: 81999999999">
+      <label>Cidade</label>
+      <input id="cidade" placeholder="Sua cidade">
+      <label>Segmento</label>
+      <input id="segmento" placeholder="Ex.: salão de beleza">
+      <label>Status</label>
+      <select id="status">
+        <option>Novo</option>
+        <option>Mensagem enviada</option>
+        <option>Respondeu</option>
+        <option>Em negociação</option>
+        <option>Cliente</option>
+        <option>Sem interesse</option>
+      </select>
+      <label>Data do próximo contato</label>
+      <input id="data" type="date">
+      <label>Valor potencial em reais</label>
+      <input id="valor" type="number" min="0" step="0.01">
+      <label>Observações</label>
+      <textarea id="observacoes" placeholder="Anotações sobre o cliente"></textarea>
+      <div class="acoes">
+        <button class="principal" onclick="salvar()">Salvar contato</button>
+        <button class="secundario" onclick="limpar()">Limpar</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Minha lista de contatos</h2>
+      <input id="filtro" placeholder="Pesquisar contatos..." oninput="mostrarContatos()">
+      <div id="lista"></div>
+    </div>
+  </section>
+
+  <section id="mensagens" class="pagina">
+    <div class="card">
+      <h2>Gerador de mensagens</h2>
+      <p class="pequeno">Preencha os campos e gere uma mensagem personalizada para revisar.</p>
+      <label>Nome do contato</label>
+      <input id="destinatario" placeholder="Nome da empresa">
+      <label>Produto ou serviço</label>
+      <input id="servico" placeholder="Ex.: posts para Instagram">
+      <label>Benefício oferecido</label>
+      <input id="beneficio" placeholder="Ex.: atrair novos clientes">
+      <label>Estilo</label>
+      <select id="estilo">
+        <option value="amigavel">Amigável</option>
+        <option value="profissional">Profissional</option>
+        <option value="curto">Curto e direto</option>
+      </select>
+      <button class="principal" style="width:100%;margin-top:12px" onclick="gerarMensagem()">Gerar mensagem</button>
+      <label>Mensagem</label>
+      <textarea id="mensagem" placeholder="Sua mensagem aparecerá aqui"></textarea>
+      <div class="acoes">
+        <button class="secundario" onclick="copiar()">Copiar</button>
+        <button class="principal" onclick="whatsapp()">Abrir WhatsApp</button>
+      </div>
+      <p class="pequeno">O WhatsApp abre com o texto preenchido. Você revisa e envia manualmente.</p>
+    </div>
+  </section>
+
+  <section id="dados" class="pagina">
+    <div class="card">
+      <h2>Backup dos contatos</h2>
+      <button class="principal" style="width:100%" onclick="exportar()">Exportar backup JSON</button>
+      <label>Importar backup</label>
+      <input id="arquivo" type="file" accept=".json,application/json" onchange="importar(event)">
+      <p class="pequeno">Os contatos ficam neste navegador. Exporte um backup para evitar perdas.</p>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button onclick="abrirPagina('inicio')">⌂<br>Início</button>
+  <button onclick="abrirPagina('cadastro')">＋<br>Contatos</button>
+  <button onclick="abrirPagina('mensagens')">✉<br>Mensagens</button>
+  <button onclick="abrirPagina('dados')">⚙<br>Dados</button>
+</nav>
+
+<script>
+const CHAVE = "vendafacil_contatos_v1";
+let contatos = carregar();
+
+function carregar() {
+  try { return JSON.parse(localStorage.getItem(CHAVE) || "[]"); }
+  catch { return []; }
+}
+
+function guardar() {
+  localStorage.setItem(CHAVE, JSON.stringify(contatos));
+  atualizar();
+}
+
+function escapar(texto) {
+  return String(texto ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function abrirPagina(id) {
+  document.querySelectorAll(".pagina").forEach(p => p.classList.remove("ativa"));
+  document.getElementById(id).classList.add("ativa");
+  window.scrollTo(0, 0);
+  if (id === "cadastro") mostrarContatos();
+}
+
+function buscar(site) {
+  const termo = document.getElementById("pesquisa").value.trim();
+  if (!termo) return alert("Digite o segmento e a cidade.");
+  const base = site === "maps"
+    ? "https://www.google.com/maps/search/"
+    : "https://www.google.com/search?q=";
+  window.open(base + encodeURIComponent(termo), "_blank");
+}
+
+function salvar() {
+  const nome = document.getElementById("nome").value.trim();
+  if (!nome) return alert("Informe o nome do contato.");
+
+  const id = document.getElementById("id").value || String(Date.now());
+  const contato = {
+    id, nome,
+    telefone: document.getElementById("telefone").value.trim(),
+    cidade: document.getElementById("cidade").value.trim(),
+    segmento: document.getElementById("segmento").value.trim(),
+    status: document.getElementById("status").value,
+    data: document.getElementById("data").value,
+    valor: Number(document.getElementById("valor").value || 0),
+    observacoes: document.getElementById("observacoes").value.trim()
+  };
+
+  const indice = contatos.findIndex(c => c.id === id);
+  if (indice >= 0) contatos[indice] = contato;
+  else contatos.unshift(contato);
+
+  limpar();
+  guardar();
+  alert("Contato salvo!");
+}
+
+function limpar() {
+  ["id","nome","telefone","cidade","segmento","data","valor","observacoes"]
+    .forEach(k => document.getElementById(k).value = "");
+  document.getElementById("status").value = "Novo";
+}
+
+function editar(id) {
+  const c = contatos.find(x => x.id === id);
+  if (!c) return;
+  abrirPagina("cadastro");
+  ["nome","telefone","cidade","segmento","status","data","valor","observacoes"]
+    .forEach(k => {
+      const origem = k === "observacoes" ? "observacoes" : k;
+      document.getElementById(k).value = c[origem] ?? "";
+    });
+  document.getElementById("id").value = c.id;
+}
+
+function excluir(id) {
+  if (!confirm("Deseja excluir este contato?")) return;
+  contatos = contatos.filter(c => c.id !== id);
+  guardar();
+}
+
+function prepararMensagem(id) {
+  const c = contatos.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById("destinatario").value = c.nome;
+  abrirPagina("mensagens");
+}
+
+function mostrarContatos() {
+  const filtro = (document.getElementById("filtro")?.value || "").toLowerCase();
+  const encontrados = contatos.filter(c =>
+    [c.nome,c.telefone,c.cidade,c.segmento].join(" ").toLowerCase().includes(filtro)
+  );
+  const lista = document.getElementById("lista");
+
+  if (!encontrados.length) {
+    lista.innerHTML = '<p class="pequeno">Nenhum contato encontrado.</p>';
+    return;
+  }
+
+  lista.innerHTML = encontrados.map(c => `
+    <div class="contato">
+      <h3>${escapar(c.nome)}</h3>
+      <p>${escapar(c.segmento)} · ${escapar(c.cidade)}</p>
+      <p>Status: ${escapar(c.status)}</p>
+      <p>Telefone: ${escapar(c.telefone || "Não informado")}</p>
+      <p>Retorno: ${escapar(c.data || "Não agendado")}</p>
+      <p>Valor potencial: R$ ${Number(c.valor || 0).toLocaleString("pt-BR",{minimumFractionDigits:2})}</p>
+      <div class="acoes">
+        <button class="secundario" onclick="prepararMensagem('${c.id}')">Mensagem</button>
+        <button class="secundario" onclick="editar('${c.id}')">Editar</button>
+        <button class="perigo" onclick="excluir('${c.id}')">Excluir</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function atualizar() {
+  document.getElementById("total").textContent = contatos.length;
+  document.getElementById("negociacoes").textContent =
+    contatos.filter(c => c.status === "Em negociação").length;
+  document.getElementById("clientes").textContent =
+    contatos.filter(c => c.status === "Cliente").length;
+
+  const hoje = new Date().toLocaleDateString("en-CA");
+  const vencidos = contatos.filter(c =>
+    c.data && c.data <= hoje &&
+    c.status !== "Cliente" && c.status !== "Sem interesse"
+  );
+
+  document.getElementById("retornos").innerHTML = vencidos.length
+    ? vencidos.map(c => `
+      <div class="contato">
+        <strong>${escapar(c.nome)}</strong>
+        <p>Retorno: ${escapar(c.data)}</p>
+        <button class="secundario" onclick="prepararMensagem('${c.id}')">Preparar mensagem</button>
+      </div>`).join("")
+    : "Nenhum retorno vencido para hoje.";
+
+  mostrarContatos();
+}
+
+function gerarMensagem() {
+  const nome = document.getElementById("destinatario").value.trim() || "tudo bem";
+  const servico = document.getElementById("servico").value.trim() || "meu serviço";
+  const beneficio = document.getElementById("beneficio").value.trim() || "ajudar seu negócio";
+  const estilo = document.getElementById("estilo").value;
+  let texto;
+
+  if (estilo === "curto") {
+    texto = `Olá, ${nome}! Trabalho com ${servico} para ${beneficio}. Posso te enviar mais detalhes, se tiver interesse?`;
+  } else if (estilo === "profissional") {
+    texto = `Olá, ${nome}. Tudo bem? Gostaria de apresentar ${servico}, uma solução que pode ajudar a ${beneficio}. Caso tenha interesse, posso compartilhar mais informações sem compromisso. Obrigado(a) pelo seu tempo.`;
+  } else {
+    texto = `Oi, ${nome}! Tudo bem? 😊 Estou entrando em contato para apresentar ${servico}, que pode ajudar a ${beneficio}. Se fizer sentido para você, posso te explicar melhor, sem compromisso. Obrigado(a)!`;
+  }
+
+  document.getElementById("mensagem").value = texto;
+}
+
+async function copiar() {
+  const texto = document.getElementById("mensagem").value;
+  if (!texto) return alert("Gere uma mensagem primeiro.");
+  try {
+    await navigator.clipboard.writeText(texto);
+    alert("Mensagem copiada!");
+  } catch {
+    document.getElementById("mensagem").select();
+    alert("Selecione e copie o texto.");
+  }
+}
+
+function whatsapp() {
+  const texto = document.getElementById("mensagem").value.trim();
+  if (!texto) return alert("Gere uma mensagem primeiro.");
+  const telefone = document.getElementById("telefone").value.replace(/\D/g, "");
+  const url = telefone
+    ? `https://wa.me/${telefone}?text=${encodeURIComponent(texto)}`
+    : `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(url, "_blank");
+}
+
+function exportar() {
+  const blob = new Blob([JSON.stringify(contatos, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "vendafacil-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importar(evento) {
+  const arquivo = evento.target.files[0];
+  if (!arquivo) return;
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    try {
+      const dados = JSON.parse(leitor.result);
+      if (!Array.isArray(dados)) throw new Error("Formato inválido");
+      if (!confirm("Adicionar os contatos deste backup?")) return;
+      dados.forEach(c => {
+        if (!c.id || contatos.some(x => x.id === c.id))
+          c.id = String(Date.now()) + Math.random().toString(16).slice(2);
+        contatos.push(c);
+      });
+      guardar();
+      alert("Backup importado!");
+    } catch {
+      alert("Não foi possível ler este arquivo JSON.");
+    }
+    evento.target.value = "";
+  };
+  leitor.readAsText(arquivo);
+}
+
+atualizar();
+</script>
+</body>
+</html>
